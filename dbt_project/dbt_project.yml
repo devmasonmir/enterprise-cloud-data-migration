@@ -1,0 +1,13 @@
+name: 'enterprise_cloud_migration'
+version: '1.0.0'
+config-version: 2
+profile: 'aws_redshift_lakehouse'
+model-paths: ["models"]
+models:
+  enterprise_cloud_migration:
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: analytics

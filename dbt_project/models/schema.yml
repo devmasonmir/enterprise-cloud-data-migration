@@ -1,0 +1,12 @@
+version: 2
+sources:
+  - name: raw_crm
+    tables: [{ name: salesforce_accounts }]
+  - name: raw_erp
+    tables: [{ name: sap_orders }]
+
+models:
+  - name: fct_unified_sales
+    columns:
+      - name: order_id
+        tests: [unique, not_null]
