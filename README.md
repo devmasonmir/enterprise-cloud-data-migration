@@ -92,7 +92,7 @@ enterprise-cloud-data-migration/
 ## ⚡ Quickstart
 
 ```bash
-git clone https://github.com/masonmirtech/enterprise-cloud-data-migration.git
+git clone https://github.com/devmasonmir/enterprise-cloud-data-migration.git
 cd enterprise-cloud-data-migration
 python -m venv venv
 .\venv\Scripts\activate
