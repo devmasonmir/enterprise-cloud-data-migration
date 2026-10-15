@@ -37,7 +37,7 @@ flowchart LR
 
     subgraph Transform["DataOps & Quality"]
         dbt["dbt Core Models<br/>(Star Schema Marts)"]
-        Audit["Reconciliation Auditor<br/>(Zero-Loss Checksum Verification)"]
+        Audit["Reconciliation Auditor<br/>(Row Count &amp; Aggregate Parity)"]
         RS --> dbt
         dbt -.-> Audit
     end
@@ -49,7 +49,7 @@ flowchart LR
 
 * **Watermark-Based Incremental Extraction**: Efficiently captures modified records using delta watermarks, eliminating full table scans.
 * **Teradata & SAP Schema Normalization**: Translates proprietary data types into open Parquet formats and ANSI SQL types.
-* **Automated Data Parity Reconciliation**: Cryptographic hash checksums and record counts guarantee zero data loss during cloud cutover.
+* **Automated Data Parity Reconciliation**: Checks exact row counts and financial aggregate totals. Totals must be finite, and the unrounded absolute difference must be strictly below `0.01`. Accepts integers, floats, and `Decimal` values; use `Decimal` for database financial totals. These aggregate checks do not establish row-level equality.
 * **Unified Analytical Modeling with dbt**: Consolidates fragmented CRM and ERP entities into high-performance dimensional models.
 * **Infrastructure as Code (Terraform)**: Fully scripted infrastructure deployment for AWS S3, Glue catalogs, Redshift clusters, and IAM.
 
@@ -76,7 +76,7 @@ enterprise-cloud-data-migration/
 │   ├── __init__.py
 │   └── migration/
 │       ├── incremental_extractor.py   # Watermark extractor
-│       └── reconciliation_auditor.py  # Checksum & row count parity
+│       └── reconciliation_auditor.py  # Aggregate & row count parity
 ├── terraform/
 │   ├── main.tf                        # S3, Glue, Redshift IaC
 │   └── variables.tf
@@ -97,11 +97,13 @@ cd enterprise-cloud-data-migration
 python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
-pytest tests/ -v
+python -m unittest discover -s tests -v
 python -m src.migration.incremental_extractor
 ```
 
 ---
+
+The unit tests use only Python's standard library and can also run before installing the cloud and dbt dependencies. NaN or infinite financial totals raise `ValueError` rather than producing an audit result.
 
 ## 📜 License
 MIT License.
