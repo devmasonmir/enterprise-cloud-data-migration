@@ -7,19 +7,29 @@ Amount = Union[int, float, Decimal]
 
 class ReconciliationAuditor:
     @staticmethod
+    def _validate_row_count(value: int) -> None:
+        """Reject invalid counts before they can produce a misleading audit."""
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise ValueError("Row counts must be non-negative integers")
+
+    @staticmethod
     def audit_parity(
         source_count: int,
         target_count: int,
         source_sum: Amount,
         target_sum: Amount,
     ) -> Dict[str, Any]:
-        """Require equal counts and an absolute total difference below 0.01.
+        """Require valid equal counts and a total difference below 0.01.
 
-        Decimal inputs preserve precision from database NUMERIC/DECIMAL values.
-        Floats are converted through their string representation, avoiding extra
-        binary conversion noise. Totals must be finite; NaN and infinity raise
-        ValueError. Comparisons use the unrounded difference.
+        Row counts must be non-negative integers. Decimal inputs preserve
+        precision from database NUMERIC/DECIMAL values. Floats are converted
+        through their string representation, avoiding extra binary conversion
+        noise. Totals must be finite; NaN and infinity raise ValueError.
+        Comparisons use the unrounded difference.
         """
+        ReconciliationAuditor._validate_row_count(source_count)
+        ReconciliationAuditor._validate_row_count(target_count)
+
         source_total = Decimal(str(source_sum))
         target_total = Decimal(str(target_sum))
         if not source_total.is_finite() or not target_total.is_finite():

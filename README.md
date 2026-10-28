@@ -49,7 +49,7 @@ flowchart LR
 
 * **Watermark-Based Incremental Extraction**: Builds exclusive-inclusive windows as parameterized SQL statements so watermark values remain separate from SQL text. Table and column names are restricted to conservative simple or dot-qualified identifiers.
 * **Teradata & SAP Schema Normalization**: Translates proprietary data types into open Parquet formats and ANSI SQL types.
-* **Automated Data Parity Reconciliation**: Checks exact row counts and financial aggregate totals. Totals must be finite, and the unrounded absolute difference must be strictly below `0.01`. Accepts integers, floats, and `Decimal` values; use `Decimal` for database financial totals. These aggregate checks do not establish row-level equality.
+* **Automated Data Parity Reconciliation**: Checks exact row counts and financial aggregate totals. Counts must be non-negative integers; booleans and other count types are rejected. Totals must be finite, and the unrounded absolute difference must be strictly below `0.01`. Accepts integers, floats, and `Decimal` values for totals; use `Decimal` for database financial values. These aggregate checks do not establish row-level equality.
 * **Unified Analytical Modeling with dbt**: Consolidates fragmented CRM and ERP entities into high-performance dimensional models.
 * **Infrastructure as Code (Terraform)**: Fully scripted infrastructure deployment for AWS S3, Glue catalogs, Redshift clusters, and IAM.
 
@@ -103,7 +103,7 @@ python -m src.migration.incremental_extractor
 
 ---
 
-`build_extract_query` returns `(sql, parameters)`. Pass both parts to a database API that supports named `:parameter` binding; do not format the parameter values into the SQL string. The unit tests use only Python's standard library and can run before installing the cloud and dbt dependencies. NaN or infinite financial totals raise `ValueError` rather than producing an audit result.
+`build_extract_query` returns `(sql, parameters)`. Pass both parts to a database API that supports named `:parameter` binding; do not format the parameter values into the SQL string. The unit tests use only Python's standard library and can run before installing the cloud and dbt dependencies. Invalid row counts and NaN or infinite financial totals raise `ValueError` rather than producing an audit result.
 
 ## 📜 License
 MIT License.

@@ -149,6 +149,20 @@ class MigrationPipelineTests(unittest.TestCase):
                             10, 10, source, target
                         )
 
+    def test_invalid_row_counts_are_rejected(self):
+        invalid_counts = (-1, 1.0, True, "10", None)
+        for value in invalid_counts:
+            for source_count, target_count in ((value, 10), (10, value)):
+                with self.subTest(
+                    source_count=source_count, target_count=target_count
+                ):
+                    with self.assertRaisesRegex(
+                        ValueError, "non-negative integers"
+                    ):
+                        ReconciliationAuditor.audit_parity(
+                            source_count, target_count, 100, 100
+                        )
+
     def test_row_count_mismatch_fails_with_matching_totals(self):
         audit = ReconciliationAuditor.audit_parity(10, 9, 100, 100)
         self.assertFalse(audit["row_count_parity"]["passed"])
