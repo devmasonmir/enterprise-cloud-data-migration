@@ -149,6 +149,18 @@ class MigrationPipelineTests(unittest.TestCase):
                             10, 10, source, target
                         )
 
+    def test_non_numeric_financial_totals_are_rejected(self):
+        invalid_totals = ("100.00", True, None, complex(100, 0), [100])
+        for value in invalid_totals:
+            for source, target in ((value, 100), (100, value)):
+                with self.subTest(source=source, target=target):
+                    with self.assertRaisesRegex(
+                        ValueError, "int, float, or Decimal"
+                    ):
+                        ReconciliationAuditor.audit_parity(
+                            10, 10, source, target
+                        )
+
     def test_invalid_row_counts_are_rejected(self):
         invalid_counts = (-1, 1.0, True, "10", None)
         for value in invalid_counts:
@@ -182,3 +194,4 @@ class MigrationPipelineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
