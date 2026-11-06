@@ -44,6 +44,17 @@ class IncrementalExtractor:
         if last_watermark is None or current_watermark is None:
             raise ValueError("Watermark bounds cannot be None")
 
+        try:
+            advances = bool(last_watermark < current_watermark)
+        except (TypeError, ValueError) as error:
+            raise ValueError(
+                "Watermark bounds must be mutually comparable"
+            ) from error
+        if not advances:
+            raise ValueError(
+                "current_watermark must be greater than last_watermark"
+            )
+
         query = (
             f"SELECT * FROM {self.table_name} "
             f"WHERE {self.watermark_column} > :last_watermark "
@@ -73,3 +84,4 @@ if __name__ == "__main__":
     )
     print("Extract Query:", sql)
     print("Parameters:", params)
+

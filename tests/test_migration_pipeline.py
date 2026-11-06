@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime, timezone
 import sqlite3
 import unittest
 
@@ -84,6 +85,41 @@ class MigrationPipelineTests(unittest.TestCase):
             ):
                 with self.assertRaisesRegex(ValueError, "cannot be None"):
                     ext.build_extract_query(last_watermark, current_watermark)
+
+    def test_non_advancing_watermark_windows_are_rejected(self):
+        ext = IncrementalExtractor("accounts", "updated_at")
+        invalid_windows = (
+            ("2026-01-02", "2026-01-02"),
+            ("2026-01-03", "2026-01-02"),
+            (2, 1),
+            (float("nan"), 3.0),
+        )
+        for last_watermark, current_watermark in invalid_windows:
+            with self.subTest(
+                last_watermark=last_watermark,
+                current_watermark=current_watermark,
+            ):
+                with self.assertRaisesRegex(ValueError, "must be greater"):
+                    ext.build_extract_query(last_watermark, current_watermark)
+
+    def test_incomparable_watermark_bounds_are_rejected(self):
+        ext = IncrementalExtractor("accounts", "updated_at")
+
+        with self.assertRaisesRegex(ValueError, "mutually comparable"):
+            ext.build_extract_query("2026-01-01", 20260102)
+
+    def test_datetime_watermark_bounds_are_preserved(self):
+        ext = IncrementalExtractor("accounts", "updated_at")
+        last_watermark = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        current_watermark = datetime(2026, 1, 2, tzinfo=timezone.utc)
+
+        _, parameters = ext.build_extract_query(
+            last_watermark,
+            current_watermark,
+        )
+
+        self.assertIs(parameters["last_watermark"], last_watermark)
+        self.assertIs(parameters["current_watermark"], current_watermark)
 
     def test_reconciliation_audit(self):
         audit = ReconciliationAuditor.audit_parity(
@@ -194,4 +230,5 @@ class MigrationPipelineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
