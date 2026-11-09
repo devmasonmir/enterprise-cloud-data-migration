@@ -11,7 +11,7 @@
 
 ---
 
-## Featured resume-aligned project
+## Enterprise Lakehouse Project
 
 ### [Enterprise Lakehouse Modernization & Governed AI-Ready Data Products](projects/enterprise-lakehouse-modernization/)
 
