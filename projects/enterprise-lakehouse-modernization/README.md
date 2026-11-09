@@ -1,20 +1,17 @@
 # Enterprise Lakehouse Modernization & Governed AI-Ready Data Products
 
-**Resume-aligned portfolio project — synthetic example, not an employer production system.**
+An enterprise lakehouse engineering project covering Bronze/Silver/Gold data processing, validation, dimensional modeling, and cloud platform design.
 
-This project demonstrates a testable local Bronze → Silver → Gold pipeline and provides dbt modeling patterns relevant to Azure Databricks, Delta Lake, Auto Loader, PySpark, Unity Catalog, Terraform, CI/CD, and Databricks Asset Bundles experience described in Mason A. Mir's resume.
+## Implementation
 
-## What is implemented
+- **Python processing:** Validates order records, normalizes identifiers, quarantines invalid data, and deduplicates by the latest ingestion timestamp within each batch.
+- **Gold analytics:** Produces customer-level aggregates using decimal arithmetic and reconciliation row counts.
+- **dbt:** Includes a customer-level Gold model and schema tests for Databricks SQL.
+- **PySpark and Auto Loader:** Includes a Databricks ingestion and Silver transformation example in `databricks/pipeline_reference.py`.
+- **Terraform:** Includes Azure Storage infrastructure definitions in `terraform/main.tf`.
+- **Quality and CI:** Automated unit tests on Python 3.10 and 3.12; the Databricks example is syntax-checked.
 
-- `lakehouse.py`: validate order IDs, customer IDs, amounts and timezone-aware timestamps; quarantine invalid records.
-- Deduplicate order IDs by most recent ingestion timestamp **within a single batch**; report reconciliation row counts.
-- Produce a customer-level Gold mart with exact Decimal currency arithmetic.
-- Automated regression tests and Python 3.10/3.12 GitHub Actions checks.
-- `dbt_project/`: reference SQL model and schema tests for a Databricks SQL Gold layer.
-
-## Run the offline demo
-
-From repository root:
+## Run locally
 
 ```bash
 cd projects/enterprise-lakehouse-modernization
@@ -22,16 +19,15 @@ python -m unittest discover -s tests -v
 python lakehouse.py sample_data/orders.json
 ```
 
-No credentials, cloud services, or third-party packages are needed for this local demo.
+The local pipeline runs on synthetic records with Python's standard library. No cloud credentials are required.
 
-## Cloud architecture (reference, not deployed)
+## Cloud data architecture
 
-1. **Sources:** SQL Server, REST APIs, and cloud object storage.
-2. **Bronze:** Databricks Auto Loader → Delta Lake raw ingestion with checkpoints.
-3. **Silver:** PySpark validation, deduplication, schema evolution, reconciliation, and quarantine.
-4. **Gold:** dbt/Databricks SQL dimensional marts and governed analytics/AI-ready inputs.
-5. **Governance and delivery:** Unity Catalog access policies, Terraform, CI/CD, and Databricks Asset Bundles.
+1. Ingest SQL Server, REST API, and cloud object data into **Bronze Delta** using Databricks Auto Loader.
+2. Apply **Silver** PySpark data-quality controls, schema normalization, deduplication, and source-to-target reconciliation.
+3. Publish **Gold** dbt/Databricks SQL marts for analytics and feature engineering.
+4. Apply **Unity Catalog** policies, observability, Terraform, and CI/CD practices for governed delivery.
 
-Only the local Python transformation and its tests execute in this repository. This example does not claim a live Azure deployment, Unity Catalog grants, continuous streaming, persistent Delta MERGE, Databricks Asset Bundle deployment, or production ML inference.
+**Deployment scope:** Cloud components are examples intended for configuration in an Azure/Databricks environment. This repository does not deploy a workspace or claim to provide production streaming, persistent Delta merges, Unity Catalog policy setup, or ML model serving.
 
-**Privacy:** All included orders are synthetic. Do not commit patient data, customer data, secrets, or employer code.
+**Data:** All included records are synthetic. No employer or customer data is included.
