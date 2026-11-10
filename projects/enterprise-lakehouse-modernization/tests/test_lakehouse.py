@@ -28,6 +28,28 @@ class MedallionTests(unittest.TestCase):
         self.assertEqual(output["silver_count"], 1)
         self.assertEqual(output["gold_customer_orders"][0]["total_amount"], "9.00")
 
+    def test_conflicting_ingestion_tie_is_quarantined(self):
+        output = medallion_batch([
+            row("a", amount="4.00", ingested_at="2026-01-01T00:00:00Z"),
+            row("a", amount="9.00", ingested_at="2026-01-01T00:00:00Z"),
+        ])
+
+        self.assertEqual(output["silver_count"], 1)
+        self.assertEqual(output["gold_customer_orders"][0]["total_amount"], "4.00")
+        self.assertEqual(output["rejected"], [{
+            "index": 1,
+            "reason": "conflicting duplicate order_id at identical ingested_at",
+        }])
+
+    def test_exact_ingestion_tie_is_idempotent(self):
+        duplicate = row("a", amount="4.00")
+
+        output = medallion_batch([duplicate, dict(duplicate)])
+
+        self.assertEqual(output["valid_count"], 2)
+        self.assertEqual(output["silver_count"], 1)
+        self.assertEqual(output["rejected"], [])
+
     def test_rejects_bad_records_without_losing_good_ones(self):
         output = medallion_batch([None, row(), row("b", amount="NaN"),
                                   row("c", customer_id="")])

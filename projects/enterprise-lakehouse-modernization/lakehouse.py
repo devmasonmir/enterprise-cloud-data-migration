@@ -49,6 +49,7 @@ def medallion_batch(records):
                 "amount": amount_decimal(raw.get("amount")),
                 "event_time": timestamp(raw.get("event_time")),
                 "ingested_at": timestamp(raw.get("ingested_at")),
+                "_source_index": index,
             })
         except (ValueError, TypeError) as exc:
             errors.append({"index": index, "reason": str(exc)})
@@ -56,8 +57,17 @@ def medallion_batch(records):
     deduplicated = {}
     for record in valid:
         previous = deduplicated.get(record["order_id"])
-        if previous is None or record["ingested_at"] >= previous["ingested_at"]:
+        if previous is None or record["ingested_at"] > previous["ingested_at"]:
             deduplicated[record["order_id"]] = record
+        elif record["ingested_at"] == previous["ingested_at"]:
+            payload_fields = ("customer_id", "amount", "event_time")
+            if any(record[field] != previous[field] for field in payload_fields):
+                errors.append({
+                    "index": record["_source_index"],
+                    "reason": (
+                        "conflicting duplicate order_id at identical ingested_at"
+                    ),
+                })
 
     totals = {}
     for record in deduplicated.values():
@@ -71,7 +81,7 @@ def medallion_batch(records):
         "bronze_count": len(records),
         "valid_count": len(valid),
         "silver_count": len(deduplicated),
-        "rejected": errors,
+        "rejected": sorted(errors, key=lambda item: item["index"]),
         "silver_orders": [
             {"order_id": rec["order_id"], "customer_id": rec["customer_id"],
              "amount": f'{rec["amount"]:.2f}'}

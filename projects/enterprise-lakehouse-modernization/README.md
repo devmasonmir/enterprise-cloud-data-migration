@@ -4,7 +4,7 @@ An enterprise lakehouse engineering project covering Bronze/Silver/Gold data pro
 
 ## Implementation
 
-- **Python processing:** Validates order records, normalizes identifiers, quarantines invalid data, and deduplicates by the latest ingestion timestamp within each batch.
+- **Python processing:** Validates order records, normalizes identifiers, quarantines invalid data, and deduplicates by the latest ingestion timestamp within each batch. Conflicting records tied at the same timestamp are quarantined instead of being resolved by input order, while exact duplicates remain idempotent.
 - **Gold analytics:** Produces customer-level aggregates using decimal arithmetic and reconciliation row counts.
 - **dbt:** Includes a customer-level Gold model and schema tests for Databricks SQL.
 - **PySpark and Auto Loader:** Includes a Databricks ingestion and Silver transformation example in `databricks/pipeline_reference.py`.
