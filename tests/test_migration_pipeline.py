@@ -92,7 +92,6 @@ class MigrationPipelineTests(unittest.TestCase):
             ("2026-01-02", "2026-01-02"),
             ("2026-01-03", "2026-01-02"),
             (2, 1),
-            (float("nan"), 3.0),
         )
         for last_watermark, current_watermark in invalid_windows:
             with self.subTest(
@@ -101,6 +100,36 @@ class MigrationPipelineTests(unittest.TestCase):
             ):
                 with self.assertRaisesRegex(ValueError, "must be greater"):
                     ext.build_extract_query(last_watermark, current_watermark)
+
+    def test_non_finite_numeric_watermarks_are_rejected(self):
+        ext = IncrementalExtractor("accounts", "updated_at")
+        values = (
+            float("nan"),
+            float("inf"),
+            float("-inf"),
+            Decimal("NaN"),
+            Decimal("sNaN"),
+            Decimal("Infinity"),
+            Decimal("-Infinity"),
+        )
+        for value in values:
+            for last_watermark, current_watermark in ((value, 1), (0, value)):
+                with self.subTest(
+                    last_watermark=str(last_watermark),
+                    current_watermark=str(current_watermark),
+                ):
+                    with self.assertRaisesRegex(ValueError, "must be finite"):
+                        ext.build_extract_query(last_watermark, current_watermark)
+
+    def test_finite_decimal_watermark_bounds_are_preserved(self):
+        ext = IncrementalExtractor("accounts", "updated_at")
+        last_watermark = Decimal("100.25")
+        current_watermark = Decimal("100.50")
+
+        _, parameters = ext.build_extract_query(last_watermark, current_watermark)
+
+        self.assertIs(parameters["last_watermark"], last_watermark)
+        self.assertIs(parameters["current_watermark"], current_watermark)
 
     def test_incomparable_watermark_bounds_are_rejected(self):
         ext = IncrementalExtractor("accounts", "updated_at")

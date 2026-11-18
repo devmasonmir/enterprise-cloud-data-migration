@@ -1,6 +1,8 @@
 """Watermark-based incremental extractor."""
 
+from decimal import Decimal
 import logging
+import math
 import re
 from typing import Any, Dict, Tuple
 
@@ -33,6 +35,16 @@ class IncrementalExtractor:
             )
         return identifier
 
+    @staticmethod
+    def _validate_watermark_bound(value: Any, field_name: str) -> None:
+        """Reject absent and non-finite numeric bounds before driver binding."""
+        if value is None:
+            raise ValueError(f"{field_name} cannot be None")
+        if isinstance(value, float) and not math.isfinite(value):
+            raise ValueError(f"{field_name} must be finite")
+        if isinstance(value, Decimal) and not value.is_finite():
+            raise ValueError(f"{field_name} must be finite")
+
     def build_extract_query(
         self, last_watermark: Any, current_watermark: Any
     ) -> Tuple[str, Dict[str, Any]]:
@@ -41,8 +53,8 @@ class IncrementalExtractor:
         The caller must pass the returned parameter mapping to its database driver;
         watermark values are deliberately never interpolated into SQL text.
         """
-        if last_watermark is None or current_watermark is None:
-            raise ValueError("Watermark bounds cannot be None")
+        self._validate_watermark_bound(last_watermark, "last_watermark")
+        self._validate_watermark_bound(current_watermark, "current_watermark")
 
         try:
             advances = bool(last_watermark < current_watermark)

@@ -61,7 +61,7 @@ flowchart LR
 
 ## 🚀 Key Technical Highlights
 
-* **Watermark-Based Incremental Extraction**: Builds advancing exclusive-inclusive windows as parameterized SQL statements so watermark values remain separate from SQL text. Table and column names are restricted to conservative simple or dot-qualified identifiers; equal, reversed, and incomparable bounds are rejected before execution.
+* **Watermark-Based Incremental Extraction**: Builds advancing exclusive-inclusive windows as parameterized SQL statements so watermark values remain separate from SQL text. Table and column names are restricted to conservative simple or dot-qualified identifiers; equal, reversed, incomparable, and non-finite numeric bounds are rejected before execution.
 * **Teradata/SAP modernization design**: Documents how relational, ERP, and CRM sources can feed cloud lakehouse architectures. This repository does not claim an active source connector or full proprietary datatype translator.
 * **Automated Data Parity Reconciliation**: Checks exact row counts and financial aggregate totals. Counts must be non-negative integers; booleans and other count types are rejected. Totals must be finite integers, floats, or `Decimal` values; strings, booleans, and other types are rejected. The unrounded absolute difference must be strictly below `0.01`; use `Decimal` for database financial values. These aggregate checks do not establish row-level equality.
 * **Analytical modeling patterns with dbt**: Includes example SQL models and dimensional schema structure; actual source integration needs warehouse credentials and environment configuration.
@@ -117,7 +117,7 @@ python -m src.migration.incremental_extractor
 
 ---
 
-`build_extract_query` returns `(sql, parameters)`. Pass both parts to a database API that supports named `:parameter` binding; do not format the parameter values into the SQL string. Watermark bounds must be mutually comparable, and `current_watermark` must be strictly greater than `last_watermark`. The unit tests use only Python's standard library and can run before installing the cloud and dbt dependencies. Invalid row counts, unsupported total types, and NaN or infinite financial totals raise `ValueError` rather than producing an audit result.
+`build_extract_query` returns `(sql, parameters)`. Pass both parts to a database API that supports named `:parameter` binding; do not format the parameter values into the SQL string. Watermark bounds must be mutually comparable and finite when numeric, and `current_watermark` must be strictly greater than `last_watermark`. The unit tests use only Python's standard library and can run before installing the cloud and dbt dependencies. Invalid row counts, unsupported total types, and NaN or infinite financial totals raise `ValueError` rather than producing an audit result.
 
 ## Scope and licensing
 
